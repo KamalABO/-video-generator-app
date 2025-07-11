@@ -23,7 +23,7 @@ export async function generateVideo(prompt: string) {
     // محاكاة انتظار التوليد
     await new Promise((res) => setTimeout(res, 2000));
 
-    const fakeVideoUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
+    const fakeVideoUrl = "/videos/videom3.mp4";
 
     await logRequest(prompt, fakeVideoUrl);
 
