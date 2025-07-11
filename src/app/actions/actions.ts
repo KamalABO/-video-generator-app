@@ -18,14 +18,10 @@ async function logRequest(prompt: string, url: string) {
   await fs.writeFile(logFile, JSON.stringify(logs, null, 2));
 }
 
-// ✅ الدالة الرئيسية لتوليد الفيديو (وهمي الآن، API حقيقي لاحقًا)
 export async function generateVideo(prompt: string) {
-  // ✅ لو أردت التبديل لاحقًا لـ DeepBrain API، ضع الكود هنا
-  const simulateDelay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
   try {
     // محاكاة انتظار التوليد
-    await simulateDelay(2000);
+    await new Promise((res) => setTimeout(res, 2000));
 
     const fakeVideoUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
 
@@ -37,6 +33,27 @@ export async function generateVideo(prompt: string) {
     return { success: false, VideoUrl: "" };
   }
 }
+
+
+// ✅ الدالة الرئيسية لتوليد الفيديو (وهمي الآن، API حقيقي لاحقًا)
+// export async function generateVideo(prompt: string) {
+//   // ✅ لو أردت التبديل لاحقًا لـ DeepBrain API، ضع الكود هنا
+//   const simulateDelay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+//   try {
+//     // محاكاة انتظار التوليد
+//     await simulateDelay(2000);
+
+//     const fakeVideoUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
+
+//     await logRequest(prompt, fakeVideoUrl);
+
+//     return { success: true, VideoUrl: fakeVideoUrl };
+//   } catch (error) {
+//     console.error("Simulated API Error:", error);
+//     return { success: false, VideoUrl: "" };
+//   }
+// }
 
 // export async function generateVideo(prompt: string) {
 //   const appId = process.env.APP_ID!;
