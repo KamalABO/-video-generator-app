@@ -8,7 +8,7 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isPending] = useTransition();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = async (e: React.FormEvent) => {
