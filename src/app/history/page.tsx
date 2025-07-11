@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 type VideoLog = {
   prompt: string;
@@ -19,10 +18,6 @@ export default function HistoryPage() {
       type: SnackbarType;
     } | null>(null);
 
-
-
-
-  const router = useRouter();
 
   // جلب السجل من الـ API
   useEffect(() => {
