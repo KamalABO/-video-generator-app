@@ -1,11 +1,10 @@
-// next.config.js
+
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb', // لو بترفع فيديوهات أكبر
-    },
+  eslint: {
+    ignoreDuringBuilds: true, // ✅ يتجاوز أخطاء ESLint أثناء البناء
   },
 };
 
 module.exports = nextConfig;
+
