@@ -27,14 +27,16 @@ interface VideoMapEntry {
 }
 
 export default function PhrasePage() {
-  const { prompt } = useParams();
+const params = useParams();
+const prompt = Array.isArray(params?.prompt) ? params.prompt[0] : params?.prompt || "";
+const promptText = decodeURIComponent(prompt);
+
+
   const router = useRouter();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [videoSrc, setVideoSrc] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [topPhrases, setTopPhrases] = useState<{ prompt: string; count: number }[]>([]);
-
-  const promptText = decodeURIComponent(prompt as string);
 
   useEffect(() => {
     const fetchPhraseLogs = async () => {
@@ -68,6 +70,7 @@ export default function PhrasePage() {
           .slice(0, 5);
 
         setTopPhrases(top);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         toast.error("فشل تحميل السجل");
       } finally {
