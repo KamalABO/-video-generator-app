@@ -1,14 +1,18 @@
-// src/pages/api/clear-log.ts
-import fs from "fs/promises";
-import path from "path";
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
-const logFilePath = path.join(process.cwd(), "video-log.json");
+export async function DELETE() {
+  const { error } = await supabase
+    .from("video_log")
+    .delete()
+    .neq("id", -1); // حذف كل السجلات
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === "POST") {
-    await fs.writeFile(logFilePath, "[]");
-    return res.status(200).json({ message: "تم الحذف" });
+  if (error) {
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
-  res.status(405).end();
+
+  return NextResponse.json({ success: true });
 }
