@@ -1,0 +1,30 @@
+{
+  "رحمه": {
+    "type": "video",
+    "src": "/videos/koky.mp4"
+  },
+  "احمد": {
+    "type": "video",
+    "src": "/videos/videom3.mp4"
+  },
+  "مريم": {
+    "type": "video",
+    "src": "/videos/islink.mp4"
+  },
+  "علا": {
+    "type": "video",
+    "src": "/videos/videom3.mp4"
+  },
+  "kareem": {
+    "type": "video",
+    "src": "/videos/fy.mp4"
+  },
+  "كمال بيحب بنوته": {
+    "type": "video",
+    "src": "/videos/koky.mp4"
+  },
+  "عيد ميلاد بنوته": {
+    "type": "video",
+    "src": "/videos/videom3.mp4"
+  }
+}

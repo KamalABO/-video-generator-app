@@ -1,142 +1,240 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Howl } from "howler";
 import Link from "next/link";
 
-type VideoLog = {
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+type LogEntry = {
   prompt: string;
   url: string;
-  createdAt: string;
+  created_at: string;
 };
+
+type VideoMapEntry = {
+  type: "video" | "image";
+  src: string;
+};
+
+const successSound = new Howl({
+  src: ["/sounds/notify.mp3"],
+  volume: 0.3,
+});
 
 export default function HistoryPage() {
-  const [logs, setLogs] = useState<VideoLog[]>([]);
+  const [logs, setLogs] = useState<
+    { prompt: string; count: number; createdAt: string; videoUrl: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
-  type SnackbarType = "success" | "error" | "info";
-  const [snackbar, setSnackbar] = useState<{
-      message: string;
-      type: SnackbarType;
-    } | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [sort, setSort] = useState<"asc" | "desc">("desc");
 
+  const router = useRouter();
 
-  // جلب السجل من الـ API
   useEffect(() => {
-    (async () => {
-      const res = await fetch("/api/logs");
-      const { logs } = await res.json();
-      setLogs(logs);
-      setLoading(false);
-    })();
-  }, []);
+    const fetchLogs = async () => {
+      try {
+        const { data: logData, error: logError } = await supabase
+          .from("video_log")
+          .select("prompt, url, created_at");
 
-  
+        if (logError) throw logError;
 
-    // عرض رسالة
-const showSnackbar = (message: string, type: SnackbarType = "info") => {
-  setSnackbar({ message, type });
+        const { data: mapData, error: mapError } = await supabase
+          .from("video_map")
+          .select("sentence, type, src");
 
-  // ✅ تشغيل صوت
-  const audio = new Audio("/notify.mp3");
-  audio.volume = 0.5;
-  audio.play();
+        if (mapError) throw mapError;
 
-  setTimeout(() => setSnackbar(null), 10000); // بعد 10 ثواني
-};
+        const grouped: Record<string, LogEntry[]> = {};
 
-  // حذف الكل
+        logData.forEach((log) => {
+          const key = log.prompt.trim();
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push({
+            prompt: log.prompt,
+            url: log.url,
+            created_at: log.created_at,
+          });
+        });
+
+        const videoMap: Record<string, VideoMapEntry> = {};
+        mapData.forEach((entry) => {
+          videoMap[entry.sentence] = { type: entry.type, src: entry.src };
+        });
+
+        const filteredKeys = Object.keys(grouped).filter((key) =>
+          key.toLowerCase().includes(searchText.toLowerCase())
+        );
+
+        const filtered = filteredKeys.map((key) => {
+          const sortedLogs = grouped[key].sort((a, b) =>
+            sort === "desc"
+              ? new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              : new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+
+          const videoEntry = videoMap[key];
+          const videoUrl = videoEntry?.type === "video" ? videoEntry.src : "";
+
+          return {
+            prompt: key,
+            count: grouped[key].length,
+            createdAt: sortedLogs[0]?.created_at,
+            videoUrl,
+          };
+        });
+
+        const sorted = filtered.sort((a, b) =>
+          sort === "desc"
+            ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+
+        setLogs(sorted);
+      } catch (error) {
+        toast.error("فشل في تحميل السجل");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLogs();
+  }, [searchText, sort]);
+
+  const handleDeletePhrase = async (prompt: string) => {
+    try {
+      const { error } = await supabase
+        .from("video_log")
+        .delete()
+        .eq("prompt", prompt);
+
+      if (!error) {
+        toast.success("تم حذف الجملة بنجاح 🗑️");
+        successSound.play();
+        setLogs((prev) => prev.filter((log) => log.prompt !== prompt));
+        router.refresh();
+      } else {
+        toast.error("فشل في حذف الجملة");
+      }
+    } catch {
+      toast.error("حدث خطأ أثناء الحذف");
+    }
+  };
+
 const handleDeleteAll = async () => {
-  await fetch("/api/logs", { method: "DELETE" });
-  setLogs([]);
-showSnackbar("🗑️ تم حذف السجل بنجاح", "error");
+  const res = await fetch("/api/delete-all", { method: "DELETE" });
+  if (res.ok) {
+    toast.success("تم حذف جميع السجلات");
+    successSound.play();
+    setLogs([]);
+    router.refresh();
+  } else {
+    toast.error("فشل في الحذف");
+  }
 };
-
-
-
-  // تصدير JSON
-const handleExport = () => {
-  window.location.href = "/api/logs/export";
-showSnackbar("📤 تم تحميل ملف السجل", "success");
-};
-
-
-
 
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-white to-blue-50 dark:from-black dark:to-gray-900 px-4 py-8">
-      <div className="max-w-5xl mx-auto bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-xl">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">📜 سجل الفيديوهات</h1>
-          <div className="flex gap-3 flex-wrap">
-            <Link
-              href="/"
-              className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition"
-            >
-              🏠 رجوع للرئيسية
-            </Link>
-            <button
-              onClick={handleExport}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-            >
-              📤 تصدير JSON
-            </button>
-            <button
-              onClick={handleDeleteAll}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-            >
-              🗑️ حذف الكل
-            </button>
-          </div>
-        </div>
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+      <h1 className="text-3xl font-bold text-center dark:text-white">
+        📜 سجل الفيديوهات (حسب الجملة)
+      </h1>
 
-        {/* محتوى السجل */}
-        {loading ? (
-          <p>جاري تحميل السجل...</p>
-        ) : logs.length === 0 ? (
-          <p className="text-gray-500 dark:text-gray-400">لا يوجد فيديوهات محفوظة بعد.</p>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {logs
-              .slice()
-              .reverse()
-              .map((log, idx) => (
-                <div
-                  key={idx}
-                  className="bg-gray-100 dark:bg-neutral-800 p-4 rounded-lg shadow border border-gray-300 dark:border-neutral-700"
-                >
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">🧠 الوصف:</h3>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">{log.prompt}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                    🕒 {new Date(log.createdAt).toLocaleString("ar-EG")}
-                  </p>
-                  <video
-                    controls
-                    src={log.url}
-                    className="w-full rounded border border-gray-300 dark:border-neutral-700"
-                  />
-                </div>
-              ))}
-          </div>
-        )}
+      <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-300">
+        <p>📁 عدد الجمل المختلفة: {logs.length}</p>
+        <button
+          onClick={handleDeleteAll}
+          className="ml-auto px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          🗑️ حذف الكل
+        </button>
       </div>
-{snackbar && (
-  <div
-    className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-50 transition-all animate-fade-in-out
-      ${
-        snackbar.type === "success"
-          ? "bg-green-600 text-white"
-          : snackbar.type === "error"
-          ? "bg-red-600 text-white"
-          : "bg-blue-600 text-white"
-      }
-    `}
-  >
-    {snackbar.message}
-  </div>
-)}
 
+      <div className="flex flex-wrap gap-4 items-center">
+        <input
+          type="text"
+          placeholder="🔍 ابحث عن جملة..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="px-4 py-2 border rounded-lg w-full md:w-[300px]"
+        />
 
-    </main>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as "asc" | "desc")}
+          className="px-4 py-2 border rounded-lg"
+        >
+          <option value="desc">الأحدث ⬇️</option>
+          <option value="asc">الأقدم ⬆️</option>
+        </select>
+      </div>
+
+      {loading ? (
+        <p className="text-center text-gray-500">جاري تحميل السجل...</p>
+      ) : logs.length === 0 ? (
+        <p className="text-center text-gray-400">لا توجد نتائج.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {logs.map(({ prompt, count, createdAt, videoUrl }) => (
+            <div
+              key={`${prompt}-${createdAt}`}
+              className="bg-white dark:bg-neutral-900 rounded-xl shadow border dark:border-neutral-700 p-4 relative"
+            >
+              <button
+                className="absolute top-2 left-2 text-red-600 hover:text-red-800 text-lg"
+                onClick={() => handleDeletePhrase(prompt)}
+                title="حذف الجملة"
+              >
+                🗑️
+              </button>
+
+              <Link href={`/phrase/${encodeURIComponent(prompt)}`}>
+                <p className="text-lg font-semibold mb-1 cursor-pointer hover:underline">
+                  📝 {prompt}
+                </p>
+              </Link>
+
+              <p className="text-sm text-gray-500 mb-2">
+                📅 {new Date(createdAt).toLocaleString("ar-EG")}
+              </p>
+
+              <p className="text-sm mb-3 text-blue-600 dark:text-blue-400">
+                🔁 تم التكرار: {count} مرة
+              </p>
+
+              {videoUrl ? (
+                <video
+                  controls
+                  className="rounded-md shadow mx-auto"
+                  style={{ width: "100%", height: "220px" }}
+                >
+                  <source src={videoUrl} type="video/mp4" />
+                  المتصفح لا يدعم تشغيل الفيديو.
+                </video>
+              ) : (
+                <p className="text-center text-gray-400">لا يوجد فيديو مرتبط</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button
+        onClick={() => router.push("/")}
+        className="fixed bottom-5 right-5 z-50 p-4 bg-blue-600 text-white rounded-full shadow-xl hover:bg-blue-700"
+        title="رجوع للرئيسية"
+      >
+        ⬅️
+      </button>
+    </div>
   );
 }

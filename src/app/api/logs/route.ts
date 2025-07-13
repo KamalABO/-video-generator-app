@@ -1,23 +1,19 @@
-import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-
-const logFile = path.join(process.cwd(), "video-log.json");
+import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 
 export async function GET() {
-  try {
-    const data = await fs.readFile(logFile, "utf-8");
-    return NextResponse.json({ logs: JSON.parse(data) });
-  } catch {
-    return NextResponse.json({ logs: [] });
-  }
+  const { data, error } = await supabase.from('video_log').select('*').order('created_at', { ascending: false });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
 }
 
-export async function DELETE() {
-  try {
-    await fs.writeFile(logFile, "[]");
-    return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ success: false });
-  }
+export async function POST(req: Request) {
+  const { prompt, url } = await req.json();
+  if (!prompt || !url)
+    return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+
+  const { error } = await supabase.from('video_log').insert({ prompt, url });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ success: true });
 }

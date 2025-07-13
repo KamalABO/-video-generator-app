@@ -1,7 +1,11 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+// next.config.js
+const nextConfig = {
+  reactStrictMode: true,
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb', // لو بترفع فيديوهات أكبر
+    },
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

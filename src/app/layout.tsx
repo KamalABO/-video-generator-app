@@ -2,6 +2,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import fs from "fs";
 import path from "path";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ar" dir="rtl">
       <body className={inter.className + " flex flex-col min-h-screen bg-white dark:bg-black"}>
+        <Toaster position="top-center" />
         <main className="flex-grow">{children}</main>
 
         {/* ✅ Footer */}
@@ -36,9 +38,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div>💼 تم التطوير بواسطة: <strong>ENG. Kamal Mohamed</strong></div>
           <div>📅 © {new Date().getFullYear()} – آخر تعديل: {lastModified}</div>
           <div className="flex justify-center gap-4 text-blue-600 dark:text-blue-400 mt-1">
-            <a href="https://github.com/username" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="https://github.com/KamalABO" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="https://linkedin.com/in/username" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-            <a href="mailto:youremail@example.com">Email</a>
+            <a href="kemo66844@gmail.com">Email</a>
           </div>
         </footer>
       </body>
