@@ -15,6 +15,7 @@ export async function GET() {
         "Content-Disposition": "attachment; filename=video-log-export.json",
       },
     });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     return new NextResponse(
       JSON.stringify({ error: "فشل في تحميل ملف السجل" }),

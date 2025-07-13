@@ -100,6 +100,7 @@ export default function HistoryPage() {
         );
 
         setLogs(sorted);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         toast.error("فشل في تحميل السجل");
       } finally {
