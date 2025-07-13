@@ -84,7 +84,41 @@ export default function DashboardPage() {
     <div className="max-w-2xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">📋 لوحة التحكم</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4 mb-8">
+      {/* رفع ملف جديد */}
+<div className="mt-8 border p-4 mb-6 rounded space-y-2">
+  <h2 className="text-lg font-semibold">⬆️ رفع ملف جديد</h2>
+  <input
+    type="file"
+    onChange={async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const form = new FormData();
+      form.append("file", file);
+      form.append("type", type); // video أو image
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: form,
+      });
+
+      if (res.ok) {
+        const { fileName } = await res.json();
+        alert(`✅ تم رفع الملف بنجاح: ${fileName}`);
+        // إعادة تحميل قائمة الملفات
+        const updated = await fetch(`/api/list-files?type=${type}`).then(r => r.json());
+        setFiles(updated.files || []);
+      } else {
+        const { error } = await res.json();
+        alert(`❌ فشل رفع الملف: ${error}`);
+      }
+    }}
+    className="w-full p-2 border  rounded"
+  />
+</div>
+
+<div className="mt-8 border p-4 mb-6 rounded space-y-2">
+  <h2 className="text-lg font-semibold">⬆️ اضف جملة و اختار الفديو </h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
           placeholder="الجملة"
@@ -132,6 +166,9 @@ export default function DashboardPage() {
         </div>
       </form>
 
+      </div>
+<div className="mt-8 border p-4 mb-6 rounded space-y-2">
+  <h2 className="text-lg font-semibold">⬆filter </h2>
             {/* بحث في الجمل */}
       <input
         type="text"
@@ -154,6 +191,7 @@ export default function DashboardPage() {
           </option>
         ))}
       </select>
+      </div>
 
       <h2 className="text-xl font-semibold mb-2">
         🗂 الجمل المسجلة ({filteredVideoMapEntries.length})
